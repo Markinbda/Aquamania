@@ -1,11 +1,11 @@
 [build]
-  command = "npm install && npm exec -w web prisma generate -- --schema ../api/prisma/schema.prisma && mkdir -p node_modules/.prisma && cp -R apps/api/node_modules/.prisma/client node_modules/.prisma/ && npm run build -w web"
+  command = "npm install && npm exec -w web prisma generate -- --schema ../api/prisma/schema.prisma && mkdir -p apps/web/node_modules/.prisma && cp -R apps/api/node_modules/.prisma/client apps/web/node_modules/.prisma/ && npm run build -w web"
   publish = "apps/web/dist"
   functions = "apps/web/netlify/functions"
 
 [functions]
   external_node_modules = ["@prisma/client"]
-  included_files = ["node_modules/.prisma/client/**"]
+  included_files = ["apps/web/node_modules/.prisma/client/**"]
 
 [[redirects]]
   from = "/api/*"
