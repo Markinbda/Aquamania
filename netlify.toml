@@ -4,7 +4,7 @@
   functions = "apps/web/netlify/functions"
 
 [functions]
-  external_node_modules = ["@prisma/client"]
+  external_node_modules = ["@prisma/client", "bcrypt"]
   included_files = ["apps/web/node_modules/.prisma/client/**"]
 
 [[redirects]]
