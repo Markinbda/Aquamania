@@ -60,3 +60,4 @@ Next:
 - Frontend target: Netlify
 - Backend target: Railway or Render
 - Ensure all required environment variables are set before deploy.
+- For Netlify frontend builds, set `VITE_API_URL` to your deployed API origin (for example `https://aquamania-api.onrender.com`) using the `builds` scope.
