@@ -27,11 +27,27 @@ dotenv.config();
 
 export function createApp() {
   const app = express();
+  const allowedOrigins = env.CLIENT_URL.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   app.use(helmet());
   app.use(
     cors({
-      origin: env.CLIENT_URL,
+      origin: (origin, callback) => {
+        // Allow server-to-server calls and same-origin requests without Origin.
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error("Origin not allowed by CORS"));
+      },
       credentials: true
     })
   );

@@ -138,7 +138,13 @@ export function RegisterPage() {
       setSuccessMessage('Registration submitted. We will review your details and contact you soon.')
       setStep(3)
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Registration failed.')
+      if (error instanceof TypeError && error.message.toLowerCase().includes('failed to fetch')) {
+        setErrorMessage(
+          `Cannot reach the API at ${API_BASE_URL}. Check VITE_API_URL and backend CORS settings.`
+        )
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Registration failed.')
+      }
     } finally {
       setSubmitting(false)
     }
