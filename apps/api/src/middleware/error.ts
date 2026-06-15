@@ -21,7 +21,7 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
   ) {
     console.error("[api:error] Database unavailable", err);
     return res.status(503).json({
-      message: "Database is unavailable. Start PostgreSQL on localhost:5432 and try again."
+      message: "Database is unavailable. Check DATABASE_URL and database access, then try again."
     });
   }
 
