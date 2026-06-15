@@ -1,0 +1,25 @@
+{
+  "name": "aquamania",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"No root tests configured\"",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "npm run dev -w web",
+    "dev:api": "npm run dev -w @aquamania/api",
+    "build": "npm run build -w web && npm run build -w @aquamania/api",
+    "prisma:generate": "npm run prisma:generate -w @aquamania/api",
+    "prisma:migrate": "npm run prisma:migrate -w @aquamania/api",
+    "prisma:seed": "npm run prisma:seed -w @aquamania/api"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}

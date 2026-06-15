@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(PARENT)
+  firstName    String
+  lastName     String
+  phone        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  instructor Instructor?
+  parent     Parent?
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  PARENT
+}
+
+model Parent {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  address        String?
+  emergencyName  String?
+  emergencyPhone String?
+  swimmers       Swimmer[]
+  payments       Payment[]
+  createdAt      DateTime  @default(now())
+}
+
+model Swimmer {
+  id                 String             @id @default(cuid())
+  parentId           String
+  parent             Parent             @relation(fields: [parentId], references: [id])
+  firstName          String
+  lastName           String
+  dateOfBirth        DateTime
+  medicalNotes       String?
+  photoUrl           String?
+  registrationStatus RegistrationStatus @default(PENDING)
+  groupId            String?
+  group              Group?             @relation(fields: [groupId], references: [id])
+  consentForms       ConsentForm[]
+  attendance         Attendance[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  WAITLISTED
+  REJECTED
+  INACTIVE
+}
+
+model Instructor {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  bio            String?
+  photoUrl       String?
+  qualifications String?
+  certifications String?
+  dateOfBirth    DateTime?
+  address        String?
+  phone          String?
+  emergencyName  String?
+  emergencyPhone String?
+  employmentType String?
+  notes          String?
+  groups         Group[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model ProgramLevel {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  minAge      Int?
+  maxAge      Int?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  groups      Group[]
+  createdAt   DateTime  @default(now())
+}
+
+model PoolLocation {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  address   String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  groups    Group[]
+  createdAt DateTime @default(now())
+}
+
+model Group {
+  id             String       @id @default(cuid())
+  name           String       @unique
+  programLevelId String
+  programLevel   ProgramLevel @relation(fields: [programLevelId], references: [id])
+  poolLocationId String
+  poolLocation   PoolLocation @relation(fields: [poolLocationId], references: [id])
+  instructorId   String
+  instructor     Instructor   @relation(fields: [instructorId], references: [id])
+  dayOfWeek      DayOfWeek
+  startTime      String
+  endTime        String
+  capacity       Int          @default(10)
+  isActive       Boolean      @default(true)
+  swimmers       Swimmer[]
+  sessions       Session[]
+  photos         Photo[]
+  termId         String?
+  term           Term?        @relation(fields: [termId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model Term {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean   @default(true)
+  groups    Group[]
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+}
+
+model Session {
+  id           String       @id @default(cuid())
+  groupId      String
+  group        Group        @relation(fields: [groupId], references: [id])
+  date         DateTime
+  notes        String?
+  isCancelled  Boolean      @default(false)
+  cancelReason String?
+  attendance   Attendance[]
+  createdAt    DateTime     @default(now())
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  swimmerId String
+  swimmer   Swimmer  @relation(fields: [swimmerId], references: [id])
+  present   Boolean
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@unique([sessionId, swimmerId])
+}
+
+model ConsentForm {
+  id           String          @id @default(cuid())
+  swimmerId    String
+  swimmer      Swimmer         @relation(fields: [swimmerId], references: [id])
+  formType     ConsentFormType
+  signedAt     DateTime?
+  signedByName String?
+  ipAddress    String?
+  fileUrl      String?
+  version      String          @default("1.0")
+  createdAt    DateTime        @default(now())
+}
+
+enum ConsentFormType {
+  WATER_SAFETY
+  PHOTO_CONSENT
+  MEDICAL_CONSENT
+  GENERAL
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  parentId      String
+  parent        Parent        @relation(fields: [parentId], references: [id])
+  termId        String?
+  term          Term?         @relation(fields: [termId], references: [id])
+  description   String
+  amountDue     Float
+  amountPaid    Float         @default(0)
+  currency      String        @default("BMD")
+  status        PaymentStatus @default(OUTSTANDING)
+  dueDate       DateTime?
+  paidDate      DateTime?
+  bankReference String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  OUTSTANDING
+  PARTIAL
+  PAID
+  OVERDUE
+  WAIVED
+}
+
+model Photo {
+  id           String   @id @default(cuid())
+  groupId      String
+  group        Group    @relation(fields: [groupId], references: [id])
+  url          String
+  thumbnailUrl String?
+  caption      String?
+  takenDate    DateTime?
+  uploadedById String
+  createdAt    DateTime @default(now())
+}
+
+model Announcement {
+  id          String               @id @default(cuid())
+  title       String
+  body        String
+  audience    AnnouncementAudience @default(ALL)
+  groupId     String?
+  sentAt      DateTime?
+  createdById String
+  createdAt   DateTime             @default(now())
+}
+
+enum AnnouncementAudience {
+  ALL
+  GROUP
+  INSTRUCTORS
+}
