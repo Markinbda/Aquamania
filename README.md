@@ -58,6 +58,12 @@ Next:
 ## Deployment Notes
 
 - Frontend target: Netlify
-- Backend target: Railway or Render
-- Ensure all required environment variables are set before deploy.
-- For Netlify frontend builds, set `VITE_API_URL` to your deployed API origin (for example `https://aquamania-api.onrender.com`) using the `builds` scope.
+- Backend target: Netlify Functions
+- Database target: Supabase Postgres
+- Netlify build runs the frontend and bundles the API function from `apps/web/netlify/functions`.
+- Set these environment variables on Netlify and redeploy:
+   - `DATABASE_URL` = your Supabase direct connection string
+   - `JWT_SECRET` = long random secret
+   - `JWT_REFRESH_SECRET` = long random secret
+   - `CLIENT_URL` = your Netlify site URL, for example `https://aquamania.netlify.app`
+- You do not need `VITE_API_URL` for the Netlify deployment because the frontend calls the same-origin `/api` routes.

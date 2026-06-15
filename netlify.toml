@@ -1,0 +1,19 @@
+[build]
+  command = "npm install && npm run prisma:generate -w @aquamania/api && npm run build -w web"
+  publish = "apps/web/dist"
+  functions = "apps/web/netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api"
+  to = "/.netlify/functions/api"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

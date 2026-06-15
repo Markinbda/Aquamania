@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { API_BASE_URL, API_CONFIG_ERROR } from '../config'
+import { API_BASE_URL } from '../config'
 
 type ConsentType = 'WATER_SAFETY' | 'PHOTO_CONSENT' | 'MEDICAL_CONSENT' | 'GENERAL'
 
@@ -83,11 +83,6 @@ export function RegisterPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setErrorMessage(null)
-
-    if (API_CONFIG_ERROR) {
-      setErrorMessage(API_CONFIG_ERROR)
-      return
-    }
 
     if (!consent.signatureAccepted) {
       setErrorMessage('Please accept the consent statement before submitting.')
