@@ -4,8 +4,8 @@
   functions = "apps/web/netlify/functions"
 
 [functions]
-  external_node_modules = ["@prisma/client", "prisma"]
-  included_files = ["node_modules/.prisma/client/**", "apps/api/node_modules/.prisma/client/**"]
+  external_node_modules = ["@prisma/client"]
+  included_files = ["node_modules/.prisma/client/**"]
 
 [[redirects]]
   from = "/api/*"
