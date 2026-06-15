@@ -20,8 +20,25 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     (err as { name?: string }).name === "PrismaClientInitializationError"
   ) {
     console.error("[api:error] Database unavailable", err);
+
+    const prismaErr = err as { errorCode?: string; message?: string };
+    const rawMessage = prismaErr.message ?? "";
+    const shortMessage = rawMessage.split("\n")[0] ?? "Prisma initialization failed";
+
+    let hint = "Check DATABASE_URL and database access, then try again.";
+    if (prismaErr.errorCode === "P1000") {
+      hint = "Database authentication failed. Verify username/password and URL encoding in DATABASE_URL.";
+    } else if (prismaErr.errorCode === "P1001") {
+      hint = "Cannot reach database host. Verify host, port, and network access.";
+    } else if (rawMessage.toLowerCase().includes("ssl")) {
+      hint = "SSL connection failed. Ensure DATABASE_URL includes sslmode=require.";
+    }
+
     return res.status(503).json({
-      message: "Database is unavailable. Check DATABASE_URL and database access, then try again."
+      message: "Database is unavailable.",
+      hint,
+      prismaCode: prismaErr.errorCode ?? null,
+      details: shortMessage
     });
   }
 
