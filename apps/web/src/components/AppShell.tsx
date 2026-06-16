@@ -38,6 +38,7 @@ const navLinksByRole: Record<AppShellProps['role'], Array<{ label: string; to: s
 export function AppShell({ role, mobileTabs = false }: AppShellProps) {
   const navigate = useNavigate()
   const navLinks = navLinksByRole[role]
+  const isAdmin = role === 'Admin'
 
   async function signOut() {
     try {
@@ -49,8 +50,12 @@ export function AppShell({ role, mobileTabs = false }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)]">
-      <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-white/90 px-4 py-3 backdrop-blur md:px-8">
+    <div className={`${isAdmin ? 'admin-water-theme' : ''} min-h-screen bg-[var(--bg)] text-[var(--text-primary)]`}>
+      <header
+        className={`sticky top-0 z-20 border-b border-[var(--border)] px-4 py-3 backdrop-blur md:px-8 ${
+          isAdmin ? 'bg-cyan-50/85' : 'bg-white/90'
+        }`}
+      >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <Link to="/" className="text-lg font-bold tracking-tight text-[var(--primary-dark)]">
             Aquamania Swimming
@@ -62,7 +67,9 @@ export function AppShell({ role, mobileTabs = false }: AppShellProps) {
             <button
               type="button"
               onClick={() => void signOut()}
-              className="rounded-full border border-[var(--border)] px-3 py-1 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--primary)]/50"
+              className={`rounded-full border border-[var(--border)] px-3 py-1 text-sm font-semibold text-[var(--text-primary)] hover:border-[var(--primary)]/50 ${
+                isAdmin ? 'bg-white/75' : ''
+              }`}
             >
               Sign out
             </button>
@@ -93,7 +100,7 @@ export function AppShell({ role, mobileTabs = false }: AppShellProps) {
       </main>
 
       {mobileTabs ? (
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-white md:hidden">
+        <nav className={`fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] md:hidden ${isAdmin ? 'bg-cyan-50/95' : 'bg-white'}`}>
           <ul className="grid grid-cols-3">
             {mobileTabLinks.map((item) => (
               <li key={item.to}>
