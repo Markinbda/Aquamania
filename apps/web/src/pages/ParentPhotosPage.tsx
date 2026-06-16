@@ -134,7 +134,7 @@ export function ParentPhotosPage() {
         {photos.map((photo) => (
           <article key={photo.id} className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm">
             <button type="button" className="block w-full" onClick={() => setActivePhotoUrl(photo.url)}>
-              <img src={photo.url} alt={photo.caption ?? 'Class photo'} className="h-56 w-full object-cover" loading="lazy" />
+              <img src={photo.url} alt={photo.caption ?? 'Class photo'} className="h-36 w-full object-cover" loading="lazy" />
             </button>
             <div className="grid gap-2 p-4">
               <p className="text-sm font-semibold text-[var(--text-primary)]">{photo.caption ?? 'Class moment'}</p>

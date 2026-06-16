@@ -22,6 +22,7 @@ export function AdminPhotosPage() {
   const [form, setForm] = useState({ groupId: '', url: '', caption: '', taggedSwimmerIds: [] as string[] })
   const [selectedGroupId, setSelectedGroupId] = useState('')
   const [selectedSwimmerId, setSelectedSwimmerId] = useState('')
+  const [activePhotoUrl, setActivePhotoUrl] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   async function load() {
@@ -138,12 +139,14 @@ export function AdminPhotosPage() {
       <div className="grid gap-3">
         {photos.map((photo) => (
           <div key={photo.id} className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
-            <img
-              src={photo.thumbnailUrl ?? photo.url}
-              alt={photo.caption ?? 'Swim class photo'}
-              loading="lazy"
-              className="h-52 w-full object-cover"
-            />
+            <button type="button" className="block w-full" onClick={() => setActivePhotoUrl(photo.url)}>
+              <img
+                src={photo.thumbnailUrl ?? photo.url}
+                alt={photo.caption ?? 'Swim class photo'}
+                loading="lazy"
+                className="h-36 w-full object-cover"
+              />
+            </button>
             <div className="p-4">
             <p className="text-sm text-[var(--text-muted)]">Group: {photo.group.name}</p>
             <a href={photo.url} target="_blank" rel="noreferrer" className="font-semibold text-[var(--primary-dark)]">Open photo</a>
@@ -160,6 +163,12 @@ export function AdminPhotosPage() {
           </div>
         ))}
       </div>
+
+      {activePhotoUrl ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4" onClick={() => setActivePhotoUrl(null)}>
+          <img src={activePhotoUrl} alt="Selected gallery photo" className="max-h-[90vh] w-auto max-w-[95vw] rounded-2xl" />
+        </div>
+      ) : null}
 
       {message ? <p className="text-sm text-[var(--success)]">{message}</p> : null}
     </section>
