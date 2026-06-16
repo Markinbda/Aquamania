@@ -16,6 +16,7 @@ const navLinksByRole: Record<AppShellProps['role'], Array<{ label: string; to: s
   Admin: [
     { label: 'Dashboard', to: '/admin' },
     { label: 'Registrations', to: '/admin/registrations' },
+    { label: 'Documents', to: '/admin/documents' },
     { label: 'Swimmers', to: '/admin/swimmers' },
     { label: 'Groups', to: '/admin/groups' },
     { label: 'Instructors', to: '/admin/instructors' },

@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { RequireAuth } from './components/RequireAuth'
 import { AdminAnnouncementsPage } from './pages/AdminAnnouncementsPage'
+import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { AdminDocumentsPage } from './pages/AdminDocumentsPage'
 import { AdminGroupsPage } from './pages/AdminGroupsPage'
 import { AdminRegistrationsPage } from './pages/AdminRegistrationsPage'
 import { AdminInstructorsPage } from './pages/AdminInstructorsPage'
@@ -35,8 +37,9 @@ function App() {
 
       <Route element={<RequireAuth allow={['ADMIN']} />}>
         <Route path="/admin" element={<AppShell role="Admin" />}>
-          <Route index element={<PlaceholderPage title="Admin Dashboard" />} />
+          <Route index element={<AdminDashboardPage />} />
           <Route path="registrations" element={<AdminRegistrationsPage />} />
+          <Route path="documents" element={<AdminDocumentsPage />} />
           <Route path="swimmers" element={<AdminSwimmersPage />} />
           <Route path="instructors" element={<AdminInstructorsPage />} />
           <Route path="groups" element={<AdminGroupsPage />} />
