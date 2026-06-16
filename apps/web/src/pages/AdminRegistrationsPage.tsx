@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config'
 
 type RegistrationStatus = 'PENDING' | 'APPROVED' | 'WAITLISTED' | 'REJECTED' | 'INACTIVE'
@@ -276,6 +277,14 @@ export function AdminRegistrationsPage() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  to={`/admin/documents?swimmerId=${detail.id}&template=WATER_SAFETY`}
+                  className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--text-primary)]"
+                >
+                  Open documents
+                </Link>
+              </div>
             </div>
 
             <label className="grid gap-2 text-sm font-semibold text-[var(--text-primary)]">

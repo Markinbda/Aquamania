@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config'
 
 type CalendarView = 'day' | 'week' | 'month'
@@ -76,6 +77,30 @@ type GroupDetail = {
   } | null
 }
 
+type RegistrationListItem = {
+  id: string
+  swimmerName: string
+  status: string
+  parentName: string
+  parentEmail: string
+}
+
+type PaymentItem = {
+  id: string
+  description: string
+  amountDue: number
+  amountPaid: number
+  status: 'OUTSTANDING' | 'PARTIAL' | 'PAID' | 'OVERDUE' | 'WAIVED'
+  dueDate: string | null
+  parent: {
+    user: {
+      firstName: string
+      lastName: string
+      email: string
+    }
+  }
+}
+
 type GroupsListResponse = { data: GroupListItem[] }
 type SessionListResponse = {
   data: Array<{
@@ -93,15 +118,8 @@ type SessionListResponse = {
 }
 type InstructorListResponse = { data: Array<{ id: string }> }
 type SwimmerListResponse = { data: Array<{ id: string }> }
-type RegistrationListResponse = { data: Array<{ id: string }> }
-type PaymentListResponse = {
-  data: Array<{
-    id: string
-    amountDue: number
-    amountPaid: number
-    status: 'OUTSTANDING' | 'PARTIAL' | 'PAID' | 'OVERDUE' | 'WAIVED'
-  }>
-}
+type RegistrationListResponse = { data: RegistrationListItem[] }
+type PaymentListResponse = { data: PaymentItem[] }
 
 type SessionItem = SessionListResponse['data'][number]
 
@@ -149,18 +167,44 @@ function monthTitle(value: Date) {
   return value.toLocaleDateString([], { month: 'long', year: 'numeric' })
 }
 
+function paymentBalance(payment: PaymentItem) {
+  return Math.max(0, payment.amountDue - payment.amountPaid)
+}
+
+function StatTile({ title, value, subtitle, to, tone = 'neutral' }: { title: string; value: string | number; subtitle?: string; to: string; tone?: 'neutral' | 'warning' | 'error' }) {
+  const toneClass =
+    tone === 'warning'
+      ? 'border-[var(--warning)]/30 bg-[var(--warning)]/10'
+      : tone === 'error'
+        ? 'border-[var(--error)]/30 bg-[var(--error)]/10'
+        : 'border-[var(--border)] bg-[var(--bg)]'
+
+  return (
+    <Link to={to} className={`rounded-2xl border p-4 transition hover:border-[var(--primary)]/40 ${toneClass}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{title}</p>
+      <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{value}</p>
+      {subtitle ? <p className="text-xs text-[var(--text-muted)]">{subtitle}</p> : null}
+    </Link>
+  )
+}
+
 export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   const [groups, setGroups] = useState<GroupListItem[]>([])
   const [sessions, setSessions] = useState<SessionItem[]>([])
+  const [pendingItems, setPendingItems] = useState<RegistrationListItem[]>([])
+  const [payments, setPayments] = useState<PaymentItem[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedGroupDetail, setSelectedGroupDetail] = useState<GroupDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
   const [calendarView, setCalendarView] = useState<CalendarView>('week')
   const [focusDate, setFocusDate] = useState(atStartOfDay(new Date()))
+  const [groupAssignments, setGroupAssignments] = useState<Record<string, string>>({})
 
   const [instructorCount, setInstructorCount] = useState(0)
   const [swimmerCount, setSwimmerCount] = useState(0)
@@ -169,79 +213,77 @@ export function AdminDashboardPage() {
   const [paymentsOutstandingAmount, setPaymentsOutstandingAmount] = useState(0)
   const [upcomingSessionsCount, setUpcomingSessionsCount] = useState(0)
 
-  useEffect(() => {
-    let active = true
+  async function loadDashboard() {
+    setLoading(true)
+    setError(null)
 
-    async function loadDashboard() {
-      setLoading(true)
-      setError(null)
+    try {
+      const [groupsRes, instructorsRes, swimmersRes, pendingRes, paymentsRes, sessionsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/groups`, { credentials: 'include' }),
+        fetch(`${API_BASE_URL}/api/instructors`, { credentials: 'include' }),
+        fetch(`${API_BASE_URL}/api/swimmers`, { credentials: 'include' }),
+        fetch(`${API_BASE_URL}/api/admin/registrations?status=PENDING`, { credentials: 'include' }),
+        fetch(`${API_BASE_URL}/api/payments`, { credentials: 'include' }),
+        fetch(`${API_BASE_URL}/api/sessions`, { credentials: 'include' })
+      ])
 
-      try {
-        const [groupsRes, instructorsRes, swimmersRes, pendingRes, paymentsRes, sessionsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/groups`, { credentials: 'include' }),
-          fetch(`${API_BASE_URL}/api/instructors`, { credentials: 'include' }),
-          fetch(`${API_BASE_URL}/api/swimmers`, { credentials: 'include' }),
-          fetch(`${API_BASE_URL}/api/admin/registrations?status=PENDING`, { credentials: 'include' }),
-          fetch(`${API_BASE_URL}/api/payments`, { credentials: 'include' }),
-          fetch(`${API_BASE_URL}/api/sessions`, { credentials: 'include' })
-        ])
-
-        if (!groupsRes.ok || !instructorsRes.ok || !swimmersRes.ok || !pendingRes.ok || !paymentsRes.ok || !sessionsRes.ok) {
-          throw new Error('Could not load dashboard data')
-        }
-
-        const groupsBody = (await groupsRes.json()) as GroupsListResponse
-        const instructorsBody = (await instructorsRes.json()) as InstructorListResponse
-        const swimmersBody = (await swimmersRes.json()) as SwimmerListResponse
-        const pendingBody = (await pendingRes.json()) as RegistrationListResponse
-        const paymentsBody = (await paymentsRes.json()) as PaymentListResponse
-        const sessionsBody = (await sessionsRes.json()) as SessionListResponse
-
-        const duePayments = paymentsBody.data.filter((item) => ['OUTSTANDING', 'PARTIAL', 'OVERDUE'].includes(item.status))
-        const outstandingAmount = duePayments.reduce((sum, item) => sum + (item.amountDue - item.amountPaid), 0)
-
-        const now = new Date()
-        const weekAhead = addDays(now, 7)
-        const nextWeekSessions = sessionsBody.data.filter((session) => {
-          const date = new Date(session.date)
-          return date >= now && date <= weekAhead && !session.isCancelled
-        })
-
-        if (!active) {
-          return
-        }
-
-        setGroups(groupsBody.data)
-        setSessions(sessionsBody.data)
-        setInstructorCount(instructorsBody.data.length)
-        setSwimmerCount(swimmersBody.data.length)
-        setPendingRegistrations(pendingBody.data.length)
-        setPaymentsDueCount(duePayments.length)
-        setPaymentsOutstandingAmount(outstandingAmount)
-        setUpcomingSessionsCount(nextWeekSessions.length)
-
-        if (!selectedGroupId) {
-          const fromSessions = sessionsBody.data.find((session) => session.groupId)?.groupId
-          const fallback = groupsBody.data[0]?.id
-          setSelectedGroupId(fromSessions ?? fallback ?? null)
-        }
-      } catch (loadError) {
-        if (active) {
-          setError(loadError instanceof Error ? loadError.message : 'Could not load dashboard')
-        }
-      } finally {
-        if (active) {
-          setLoading(false)
-        }
+      if (!groupsRes.ok || !instructorsRes.ok || !swimmersRes.ok || !pendingRes.ok || !paymentsRes.ok || !sessionsRes.ok) {
+        throw new Error('Could not load dashboard data')
       }
-    }
 
+      const groupsBody = (await groupsRes.json()) as GroupsListResponse
+      const instructorsBody = (await instructorsRes.json()) as InstructorListResponse
+      const swimmersBody = (await swimmersRes.json()) as SwimmerListResponse
+      const pendingBody = (await pendingRes.json()) as RegistrationListResponse
+      const paymentsBody = (await paymentsRes.json()) as PaymentListResponse
+      const sessionsBody = (await sessionsRes.json()) as SessionListResponse
+
+      const duePayments = paymentsBody.data.filter((item) => ['OUTSTANDING', 'PARTIAL', 'OVERDUE'].includes(item.status))
+      const outstandingAmount = duePayments.reduce((sum, item) => sum + paymentBalance(item), 0)
+
+      const now = new Date()
+      const weekAhead = addDays(now, 7)
+      const nextWeekSessions = sessionsBody.data.filter((session) => {
+        const date = new Date(session.date)
+        return date >= now && date <= weekAhead && !session.isCancelled
+      })
+
+      setGroups(groupsBody.data)
+      setSessions(sessionsBody.data)
+      setPendingItems(pendingBody.data)
+      setPayments(duePayments)
+      setInstructorCount(instructorsBody.data.length)
+      setSwimmerCount(swimmersBody.data.length)
+      setPendingRegistrations(pendingBody.data.length)
+      setPaymentsDueCount(duePayments.length)
+      setPaymentsOutstandingAmount(outstandingAmount)
+      setUpcomingSessionsCount(nextWeekSessions.length)
+
+      setGroupAssignments((previous) => {
+        const next = { ...previous }
+        pendingBody.data.forEach((item) => {
+          if (!next[item.id]) {
+            next[item.id] = groupsBody.data[0]?.id ?? ''
+          }
+        })
+        return next
+      })
+
+      if (!selectedGroupId) {
+        const fromSessions = sessionsBody.data.find((session) => session.groupId)?.groupId
+        const fallback = groupsBody.data[0]?.id
+        setSelectedGroupId(fromSessions ?? fallback ?? null)
+      }
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Could not load dashboard')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     void loadDashboard()
-
-    return () => {
-      active = false
-    }
-  }, [selectedGroupId])
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -323,6 +365,106 @@ export function AdminDashboardPage() {
   const totalEnrolled = useMemo(() => groups.reduce((sum, item) => sum + item._count.swimmers, 0), [groups])
   const utilizationPercent = totalCapacity === 0 ? 0 : Math.round((totalEnrolled / totalCapacity) * 100)
 
+  async function approveRegistration(swimmerId: string) {
+    const groupId = groupAssignments[swimmerId]
+    if (!groupId) {
+      setError('Choose a group before approving a registration')
+      return
+    }
+
+    setActionLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/registrations/${swimmerId}/approve`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ groupId })
+      })
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { message?: string } | null
+        throw new Error(body?.message ?? 'Could not approve registration')
+      }
+
+      setMessage('Registration approved')
+      await loadDashboard()
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Could not approve registration')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function recordPayment(paymentId: string) {
+    const amount = window.prompt('Amount received')
+    if (!amount) {
+      return
+    }
+
+    setActionLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}/record`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amountPaid: Number(amount),
+          paidDate: new Date().toISOString(),
+          notes: 'Recorded from dashboard quick action'
+        })
+      })
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { message?: string } | null
+        throw new Error(body?.message ?? 'Could not record payment')
+      }
+
+      setMessage('Payment recorded')
+      await loadDashboard()
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Could not record payment')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  async function generateSessions() {
+    if (!selectedGroupId) {
+      return
+    }
+
+    setActionLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/groups/${selectedGroupId}/generate-sessions`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { message?: string } | null
+        throw new Error(body?.message ?? 'Could not generate sessions')
+      }
+
+      const body = (await response.json()) as { message: string }
+      setMessage(body.message)
+      await loadDashboard()
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Could not generate sessions')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   function changeFocus(direction: 'prev' | 'next') {
     const step = direction === 'next' ? 1 : -1
     if (calendarView === 'day') {
@@ -361,36 +503,21 @@ export function AdminDashboardPage() {
     <section className="grid gap-5">
       <div className="rounded-3xl border border-[var(--border)] bg-white p-4 shadow-sm md:p-6">
         <h1 className="text-2xl font-bold text-[var(--text-primary)] md:text-3xl">Admin Dashboard</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">Monitor classes, enrollment, finance, and registrations in one place.</p>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">Monitor classes, enrollment, finance, registrations, and document workflows in one place.</p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Instructors</p>
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{instructorCount}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Swimmers</p>
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{swimmerCount}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--warning)]/30 bg-[var(--warning)]/10 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">New Registrations</p>
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{pendingRegistrations}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--error)]/30 bg-[var(--error)]/10 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Payments Due</p>
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{paymentsDueCount}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Outstanding Amount</p>
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">${paymentsOutstandingAmount.toFixed(0)}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Capacity Utilization</p>
-            <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{utilizationPercent}%</p>
-            <p className="text-xs text-[var(--text-muted)]">{totalEnrolled}/{totalCapacity} enrolled</p>
-          </div>
+          <StatTile title="Instructors" value={instructorCount} to="/admin/instructors" />
+          <StatTile title="Swimmers" value={swimmerCount} to="/admin/swimmers" />
+          <StatTile title="New Registrations" value={pendingRegistrations} to="/admin/registrations" tone="warning" />
+          <StatTile title="Payments Due" value={paymentsDueCount} to="/admin/payments" tone="error" />
+          <StatTile title="Outstanding Amount" value={`$${paymentsOutstandingAmount.toFixed(0)}`} to="/admin/payments" />
+          <StatTile title="Capacity Utilization" value={`${utilizationPercent}%`} subtitle={`${totalEnrolled}/${totalCapacity} enrolled`} to="/admin/groups" />
         </div>
       </div>
+
+      {message ? (
+        <p className="rounded-2xl border border-[var(--success)]/30 bg-[var(--success)]/10 px-4 py-3 text-sm text-[var(--success)]">{message}</p>
+      ) : null}
 
       {error ? (
         <p className="rounded-2xl border border-[var(--error)]/30 bg-[var(--error)]/10 px-4 py-3 text-sm text-[var(--error)]">{error}</p>
@@ -511,6 +638,19 @@ export function AdminDashboardPage() {
                   {selectedGroupDetail.dayOfWeek} {timeLabel(selectedGroupDetail.startTime)} - {timeLabel(selectedGroupDetail.endTime)}
                 </p>
                 <p className="text-sm text-[var(--text-muted)]">Location: {selectedGroupDetail.poolLocation.name}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void generateSessions()}
+                    disabled={actionLoading}
+                    className="min-h-10 rounded-xl bg-[var(--primary)] px-3 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Generate Sessions
+                  </button>
+                  <Link to="/admin/groups" className="min-h-10 rounded-xl border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)]">
+                    Open groups
+                  </Link>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
@@ -524,13 +664,23 @@ export function AdminDashboardPage() {
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Swimmers</p>
                 <p className="mt-1 text-sm text-[var(--text-muted)]">{selectedGroupDetail.swimmers.length}/{selectedGroupDetail.capacity} enrolled</p>
-                <ul className="mt-2 grid max-h-44 gap-2 overflow-auto text-sm">
+                <ul className="mt-2 grid max-h-52 gap-2 overflow-auto text-sm">
                   {selectedGroupDetail.swimmers.length === 0 ? (
                     <li className="text-[var(--text-muted)]">No swimmers enrolled yet.</li>
                   ) : (
                     selectedGroupDetail.swimmers.map((swimmer) => (
                       <li key={swimmer.id} className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-[var(--text-primary)]">
-                        {swimmer.firstName} {swimmer.lastName}
+                        <div className="flex items-center justify-between gap-3">
+                          <span>
+                            {swimmer.firstName} {swimmer.lastName}
+                          </span>
+                          <Link
+                            to={`/admin/documents?swimmerId=${swimmer.id}&template=GENERAL`}
+                            className="text-xs font-semibold text-[var(--primary-dark)]"
+                          >
+                            Documents
+                          </Link>
+                        </div>
                       </li>
                     ))
                   )}
@@ -557,6 +707,105 @@ export function AdminDashboardPage() {
             </div>
           ) : null}
         </aside>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <section className="rounded-3xl border border-[var(--border)] bg-white p-4 shadow-sm md:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Quick Approvals</h2>
+              <p className="text-sm text-[var(--text-muted)]">Approve new registrations directly from the dashboard.</p>
+            </div>
+            <Link to="/admin/registrations" className="text-sm font-semibold text-[var(--primary-dark)]">
+              Open queue
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            {pendingItems.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-3 text-sm text-[var(--text-muted)]">No registrations waiting right now.</p>
+            ) : (
+              pendingItems.slice(0, 5).map((item) => (
+                <div key={item.id} className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-[var(--text-primary)]">{item.swimmerName}</p>
+                      <p className="text-sm text-[var(--text-muted)]">{item.parentName} | {item.parentEmail}</p>
+                    </div>
+                    <Link
+                      to={`/admin/documents?swimmerId=${item.id}&template=WATER_SAFETY`}
+                      className="text-sm font-semibold text-[var(--primary-dark)]"
+                    >
+                      Documents
+                    </Link>
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
+                    <select
+                      value={groupAssignments[item.id] ?? ''}
+                      onChange={(event) => setGroupAssignments((previous) => ({ ...previous, [item.id]: event.target.value }))}
+                      className="min-h-12 rounded-2xl border border-[var(--border)] px-3"
+                    >
+                      <option value="">Assign group</option>
+                      {groups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => void approveRegistration(item.id)}
+                      disabled={actionLoading || !groupAssignments[item.id]}
+                      className="min-h-12 rounded-2xl bg-[var(--success)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[var(--border)] bg-white p-4 shadow-sm md:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Payments Due</h2>
+              <p className="text-sm text-[var(--text-muted)]">Record incoming payments without leaving the dashboard.</p>
+            </div>
+            <Link to="/admin/payments" className="text-sm font-semibold text-[var(--primary-dark)]">
+              Open ledger
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            {payments.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-3 text-sm text-[var(--text-muted)]">No due payments right now.</p>
+            ) : (
+              payments.slice(0, 5).map((payment) => (
+                <div key={payment.id} className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
+                  <p className="font-semibold text-[var(--text-primary)]">{payment.description}</p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {payment.parent.user.firstName} {payment.parent.user.lastName} | {payment.parent.user.email}
+                  </p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    Balance: ${paymentBalance(payment).toFixed(2)} | Status: {payment.status}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void recordPayment(payment.id)}
+                      disabled={actionLoading}
+                      className="min-h-10 rounded-xl bg-[var(--primary)] px-3 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      Record Payment
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
       </div>
     </section>
   )
