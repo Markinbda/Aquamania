@@ -297,18 +297,18 @@ async function main() {
   const demoPhotos = [
     {
       id: "demo-photo-1",
-      url: "https://images.unsplash.com/photo-1438029071396-1e831a7fa6d8?auto=format&fit=crop&w=1200&q=80",
-      caption: "Kickboard lane drills"
+      url: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      caption: "Pool lane kick practice"
     },
     {
       id: "demo-photo-2",
-      url: "https://images.unsplash.com/photo-1472745942893-4b9f730c7668?auto=format&fit=crop&w=1200&q=80",
-      caption: "Coach feedback at wall"
+      url: "https://images.pexels.com/photos/261185/pexels-photo-261185.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      caption: "Freestyle training set"
     },
     {
       id: "demo-photo-3",
-      url: "https://images.unsplash.com/photo-1522706604291-210a56c3b376?auto=format&fit=crop&w=1200&q=80",
-      caption: "Breathing pattern practice"
+      url: "https://images.pexels.com/photos/37530/divers-scuba-divers-diving-underwater-37530.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      caption: "Breathing and body position drills"
     }
   ];
 
