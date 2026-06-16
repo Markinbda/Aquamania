@@ -6,6 +6,7 @@ type Photo = {
   id: string
   groupId: string
   url: string
+  thumbnailUrl?: string | null
   caption: string | null
   group: { id: string; name: string }
   tags: Array<{ swimmer: { id: string; firstName: string; lastName: string; groupId: string | null } }>
@@ -136,7 +137,14 @@ export function AdminPhotosPage() {
 
       <div className="grid gap-3">
         {photos.map((photo) => (
-          <div key={photo.id} className="rounded-2xl border border-[var(--border)] bg-white p-4">
+          <div key={photo.id} className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
+            <img
+              src={photo.thumbnailUrl ?? photo.url}
+              alt={photo.caption ?? 'Swim class photo'}
+              loading="lazy"
+              className="h-52 w-full object-cover"
+            />
+            <div className="p-4">
             <p className="text-sm text-[var(--text-muted)]">Group: {photo.group.name}</p>
             <a href={photo.url} target="_blank" rel="noreferrer" className="font-semibold text-[var(--primary-dark)]">Open photo</a>
             <p className="text-sm text-[var(--text-muted)]">{photo.caption ?? 'No caption'}</p>
@@ -148,6 +156,7 @@ export function AdminPhotosPage() {
               ))}
             </div>
             <button type="button" className="mt-3 min-h-12 rounded-2xl bg-[var(--error)] px-4 text-sm font-semibold text-white" onClick={() => void remove(photo.id)}>Delete</button>
+            </div>
           </div>
         ))}
       </div>
