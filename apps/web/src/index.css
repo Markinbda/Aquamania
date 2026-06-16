@@ -48,10 +48,27 @@ body {
     radial-gradient(circle at top left, rgba(125, 211, 252, 0.35), transparent 30%),
     radial-gradient(circle at top right, rgba(103, 232, 249, 0.3), transparent 28%),
     linear-gradient(180deg, #f4fcff 0%, #e9f8ff 52%, #edfaff 100%);
+  position: relative;
+  overflow-x: clip;
+}
+
+.admin-water-theme::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 18rem;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(110, 231, 255, 0.38), transparent 18%),
+    radial-gradient(circle at 82% 6%, rgba(56, 189, 248, 0.22), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 72%);
+  opacity: 0.95;
 }
 
 .admin-water-theme .bg-white {
   background-color: rgba(248, 253, 255, 0.94);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(235, 249, 255, 0.62));
+  border-color: rgba(154, 201, 220, 0.7);
 }
 
 .admin-water-theme .shadow-sm {
@@ -63,6 +80,91 @@ body {
 .admin-water-theme .rounded-xl,
 .admin-water-theme .rounded-full {
   backdrop-filter: blur(8px);
+}
+
+.admin-shell-header {
+  position: relative;
+}
+
+.admin-shell-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 14px;
+  background:
+    radial-gradient(circle at 12px -2px, transparent 11px, rgba(47, 169, 205, 0.28) 11px, rgba(47, 169, 205, 0.28) 13px, transparent 13px) repeat-x;
+  background-size: 40px 14px;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.admin-shell-brand {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.admin-shell-brand::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #67e8f9, #0891b2);
+  box-shadow: 0 0 0 6px rgba(103, 232, 249, 0.16);
+}
+
+.admin-shell-nav {
+  position: relative;
+  padding-bottom: 0.2rem;
+}
+
+.admin-shell-nav a {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-shell-nav a::after {
+  content: '';
+  position: absolute;
+  inset: auto 12px 4px 12px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.admin-shell-nav a:hover::after,
+.admin-shell-nav a[aria-current='page']::after {
+  opacity: 1;
+}
+
+.admin-shell-main {
+  position: relative;
+}
+
+.admin-shell-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 12%),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 118px,
+      rgba(125, 211, 252, 0.16) 118px,
+      rgba(125, 211, 252, 0.16) 120px,
+      transparent 120px,
+      transparent 238px,
+      rgba(255, 255, 255, 0.55) 238px,
+      rgba(255, 255, 255, 0.55) 240px
+    );
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 95%);
 }
 
 a {

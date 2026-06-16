@@ -52,12 +52,12 @@ export function AppShell({ role, mobileTabs = false }: AppShellProps) {
   return (
     <div className={`${isAdmin ? 'admin-water-theme' : ''} min-h-screen bg-[var(--bg)] text-[var(--text-primary)]`}>
       <header
-        className={`sticky top-0 z-20 border-b border-[var(--border)] px-4 py-3 backdrop-blur md:px-8 ${
+        className={`${isAdmin ? 'admin-shell-header' : ''} sticky top-0 z-20 border-b border-[var(--border)] px-4 py-3 backdrop-blur md:px-8 ${
           isAdmin ? 'bg-cyan-50/85' : 'bg-white/90'
         }`}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <Link to="/" className="text-lg font-bold tracking-tight text-[var(--primary-dark)]">
+          <Link to="/" className={`${isAdmin ? 'admin-shell-brand' : ''} text-lg font-bold tracking-tight text-[var(--primary-dark)]`}>
             Aquamania Swimming
           </Link>
           <div className="flex items-center gap-3">
@@ -75,7 +75,7 @@ export function AppShell({ role, mobileTabs = false }: AppShellProps) {
             </button>
           </div>
         </div>
-        <nav className="mx-auto mt-3 hidden max-w-6xl flex-wrap gap-2 md:flex">
+        <nav className={`${isAdmin ? 'admin-shell-nav' : ''} mx-auto mt-3 hidden max-w-6xl flex-wrap gap-2 md:flex`}>
           {navLinks.map((item) => (
             <NavLink
               key={item.to}
@@ -95,7 +95,7 @@ export function AppShell({ role, mobileTabs = false }: AppShellProps) {
         </nav>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-5 md:px-8 md:pb-10">
+      <main className={`${isAdmin ? 'admin-shell-main' : ''} mx-auto w-full max-w-6xl px-4 pb-28 pt-5 md:px-8 md:pb-10`}>
         <Outlet />
       </main>
 
