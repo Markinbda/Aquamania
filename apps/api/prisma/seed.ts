@@ -297,18 +297,18 @@ async function main() {
   const demoPhotos = [
     {
       id: "demo-photo-1",
-      url: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      caption: "Pool lane kick practice"
+      url: "/demo-photos/kids-pool-1.jpg",
+      caption: "Children kick drills in the pool"
     },
     {
       id: "demo-photo-2",
-      url: "https://images.pexels.com/photos/261185/pexels-photo-261185.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      caption: "Freestyle training set"
+      url: "/demo-photos/kids-pool-2.jpg",
+      caption: "Children freestyle lane practice"
     },
     {
       id: "demo-photo-3",
-      url: "https://images.pexels.com/photos/37530/divers-scuba-divers-diving-underwater-37530.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      caption: "Breathing and body position drills"
+      url: "/demo-photos/kids-pool-3.jpg",
+      caption: "Children pool confidence session"
     }
   ];
 
