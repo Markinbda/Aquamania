@@ -136,7 +136,7 @@ export function AdminPhotosPage() {
         </div>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {photos.map((photo) => (
           <div key={photo.id} className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
             <button type="button" className="block w-full" onClick={() => setActivePhotoUrl(photo.url)}>
@@ -144,7 +144,7 @@ export function AdminPhotosPage() {
                 src={photo.thumbnailUrl ?? photo.url}
                 alt={photo.caption ?? 'Swim class photo'}
                 loading="lazy"
-                className="h-36 w-full object-cover"
+                className="h-24 w-full object-cover"
               />
             </button>
             <div className="p-4">
