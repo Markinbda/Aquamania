@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
+import { RequireAuth } from './components/RequireAuth'
 import { AdminAnnouncementsPage } from './pages/AdminAnnouncementsPage'
 import { AdminGroupsPage } from './pages/AdminGroupsPage'
 import { AdminRegistrationsPage } from './pages/AdminRegistrationsPage'
@@ -14,6 +15,7 @@ import { InstructorAttendancePage } from './pages/InstructorAttendancePage'
 import { InstructorDashboardPage } from './pages/InstructorDashboardPage'
 import { InstructorSchedulePage } from './pages/InstructorSchedulePage'
 import { LandingPage } from './pages/LandingPage'
+import { LoginPage } from './pages/LoginPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ParentDashboardPage } from './pages/ParentDashboardPage'
 import { ParentPaymentsPage } from './pages/ParentPaymentsPage'
@@ -27,38 +29,44 @@ function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/login" element={<PlaceholderPage title="Sign In" />} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<PlaceholderPage title="Forgot Password" />} />
       <Route path="/reset-password" element={<PlaceholderPage title="Reset Password" />} />
 
-      <Route path="/admin" element={<AppShell role="Admin" />}>
-        <Route index element={<PlaceholderPage title="Admin Dashboard" />} />
-        <Route path="registrations" element={<AdminRegistrationsPage />} />
-        <Route path="swimmers" element={<AdminSwimmersPage />} />
-        <Route path="instructors" element={<AdminInstructorsPage />} />
-        <Route path="groups" element={<AdminGroupsPage />} />
-        <Route path="payments" element={<AdminPaymentsPage />} />
-        <Route path="photos" element={<AdminPhotosPage />} />
-        <Route path="announcements" element={<AdminAnnouncementsPage />} />
-        <Route path="settings/levels" element={<AdminLevelsPage />} />
-        <Route path="settings/locations" element={<AdminLocationsPage />} />
-        <Route path="settings/terms" element={<AdminTermsPage />} />
+      <Route element={<RequireAuth allow={['ADMIN']} />}>
+        <Route path="/admin" element={<AppShell role="Admin" />}>
+          <Route index element={<PlaceholderPage title="Admin Dashboard" />} />
+          <Route path="registrations" element={<AdminRegistrationsPage />} />
+          <Route path="swimmers" element={<AdminSwimmersPage />} />
+          <Route path="instructors" element={<AdminInstructorsPage />} />
+          <Route path="groups" element={<AdminGroupsPage />} />
+          <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="photos" element={<AdminPhotosPage />} />
+          <Route path="announcements" element={<AdminAnnouncementsPage />} />
+          <Route path="settings/levels" element={<AdminLevelsPage />} />
+          <Route path="settings/locations" element={<AdminLocationsPage />} />
+          <Route path="settings/terms" element={<AdminTermsPage />} />
+        </Route>
       </Route>
 
-      <Route path="/portal" element={<AppShell role="Parent" mobileTabs />}>
-        <Route index element={<ParentDashboardPage />} />
-        <Route path="swimmers" element={<ParentSwimmersPage />} />
-        <Route path="schedule" element={<ParentSchedulePage />} />
-        <Route path="payments" element={<ParentPaymentsPage />} />
-        <Route path="photos" element={<PortalSimpleListPage title="Photos" endpoint="/api/parent/photos" />} />
-        <Route path="consent" element={<PortalSimpleListPage title="Consent Forms" endpoint="/api/consent-forms" />} />
-        <Route path="announcements" element={<PortalSimpleListPage title="Announcements" endpoint="/api/parent/announcements" />} />
+      <Route element={<RequireAuth allow={['PARENT']} />}>
+        <Route path="/portal" element={<AppShell role="Parent" mobileTabs />}>
+          <Route index element={<ParentDashboardPage />} />
+          <Route path="swimmers" element={<ParentSwimmersPage />} />
+          <Route path="schedule" element={<ParentSchedulePage />} />
+          <Route path="payments" element={<ParentPaymentsPage />} />
+          <Route path="photos" element={<PortalSimpleListPage title="Photos" endpoint="/api/parent/photos" />} />
+          <Route path="consent" element={<PortalSimpleListPage title="Consent Forms" endpoint="/api/consent-forms" />} />
+          <Route path="announcements" element={<PortalSimpleListPage title="Announcements" endpoint="/api/parent/announcements" />} />
+        </Route>
       </Route>
 
-      <Route path="/instructor" element={<AppShell role="Instructor" mobileTabs />}>
-        <Route index element={<InstructorDashboardPage />} />
-        <Route path="schedule" element={<InstructorSchedulePage />} />
-        <Route path="sessions/:id/attendance" element={<InstructorAttendancePage />} />
+      <Route element={<RequireAuth allow={['INSTRUCTOR']} />}>
+        <Route path="/instructor" element={<AppShell role="Instructor" mobileTabs />}>
+          <Route index element={<InstructorDashboardPage />} />
+          <Route path="schedule" element={<InstructorSchedulePage />} />
+          <Route path="sessions/:id/attendance" element={<InstructorAttendancePage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

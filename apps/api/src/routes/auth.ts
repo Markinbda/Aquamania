@@ -7,6 +7,22 @@ import { env } from "../config/env.js";
 import { prisma } from "../lib/prisma.js";
 import { buildSignedConsentRecords, hasAllRequiredConsents } from "../services/consentLogic.js";
 
+const isProduction = env.NODE_ENV === "production";
+
+const accessCookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: isProduction,
+  maxAge: 900000
+};
+
+const refreshCookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: isProduction,
+  maxAge: 7 * 24 * 60 * 60 * 1000
+};
+
 const consentTypeEnum = z.enum(["WATER_SAFETY", "PHOTO_CONSENT", "MEDICAL_CONSENT", "GENERAL"]);
 
 const registerSchema = z.object({
@@ -136,13 +152,8 @@ authRouter.post("/login", async (req, res) => {
     expiresIn: "7d"
   });
 
-  res.cookie("accessToken", accessToken, { httpOnly: true, sameSite: "lax", secure: false, maxAge: 900000 });
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    maxAge: 7 * 24 * 60 * 60 * 1000
-  });
+  res.cookie("accessToken", accessToken, accessCookieOptions);
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions);
 
   return res.json({
     user: {
@@ -159,4 +170,29 @@ authRouter.post("/logout", (_req, res) => {
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
   res.status(204).send();
+});
+
+authRouter.get("/me", async (req, res) => {
+  const token = req.cookies?.accessToken as string | undefined;
+  if (!token) {
+    return res.status(401).json({ message: "Not signed in" });
+  }
+
+  let payload: { sub: string };
+  try {
+    payload = jwt.verify(token, env.JWT_SECRET) as { sub: string };
+  } catch {
+    return res.status(401).json({ message: "Your session has expired. Please sign in again." });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    select: { id: true, email: true, role: true, firstName: true, lastName: true }
+  });
+
+  if (!user) {
+    return res.status(401).json({ message: "Account not found" });
+  }
+
+  return res.json({ user });
 });
