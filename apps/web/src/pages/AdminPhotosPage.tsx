@@ -86,37 +86,40 @@ export function AdminPhotosPage() {
 
   return (
     <section className="grid gap-4">
-      <div className="rounded-3xl border border-[var(--border)] bg-white p-5 shadow-sm md:p-8">
+      <div className="rounded-3xl border border-[var(--border)] bg-white p-4 shadow-sm md:p-5">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">Photo Management</h1>
-        <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={upload}>
-          <select className="min-h-12 rounded-2xl border border-[var(--border)] px-4" value={form.groupId} onChange={(e) => setForm((p) => ({ ...p, groupId: e.target.value }))} required>
+        <form className="mt-3 grid gap-2 md:grid-cols-12" onSubmit={upload}>
+          <select className="min-h-11 rounded-2xl border border-[var(--border)] px-4 md:col-span-3" value={form.groupId} onChange={(e) => setForm((p) => ({ ...p, groupId: e.target.value }))} required>
             <option value="">Group</option>
             {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
           </select>
-          <input className="min-h-12 rounded-2xl border border-[var(--border)] px-4" placeholder="Photo URL" value={form.url} onChange={(e) => setForm((p) => ({ ...p, url: e.target.value }))} required />
-          <select
-            multiple
-            className="min-h-32 rounded-2xl border border-[var(--border)] px-4 py-2 md:col-span-2"
-            value={form.taggedSwimmerIds}
-            onChange={(event) => {
-              const values = Array.from(event.target.selectedOptions).map((option) => option.value)
-              setForm((prev) => ({ ...prev, taggedSwimmerIds: values }))
-            }}
-          >
-            {swimmers
-              .filter((swimmer) => !form.groupId || swimmer.groupId === form.groupId)
-              .map((swimmer) => (
-                <option key={swimmer.id} value={swimmer.id}>
-                  {swimmer.firstName} {swimmer.lastName}
-                </option>
-              ))}
-          </select>
-          <input className="min-h-12 rounded-2xl border border-[var(--border)] px-4 md:col-span-2" placeholder="Caption" value={form.caption} onChange={(e) => setForm((p) => ({ ...p, caption: e.target.value }))} />
-          <button type="submit" className="min-h-12 rounded-2xl bg-[var(--primary)] px-4 text-white">Add photo</button>
+          <input className="min-h-11 rounded-2xl border border-[var(--border)] px-4 md:col-span-5" placeholder="Photo URL" value={form.url} onChange={(e) => setForm((p) => ({ ...p, url: e.target.value }))} required />
+          <input className="min-h-11 rounded-2xl border border-[var(--border)] px-4 md:col-span-3" placeholder="Caption" value={form.caption} onChange={(e) => setForm((p) => ({ ...p, caption: e.target.value }))} />
+          <button type="submit" className="min-h-11 rounded-2xl bg-[var(--primary)] px-4 text-white md:col-span-1">Add</button>
+          <details className="rounded-2xl border border-[var(--border)] px-3 py-2 md:col-span-12">
+            <summary className="cursor-pointer text-sm font-semibold text-[var(--text-primary)]">Tag swimmers (optional)</summary>
+            <select
+              multiple
+              className="mt-2 h-24 w-full rounded-xl border border-[var(--border)] px-3 py-2"
+              value={form.taggedSwimmerIds}
+              onChange={(event) => {
+                const values = Array.from(event.target.selectedOptions).map((option) => option.value)
+                setForm((prev) => ({ ...prev, taggedSwimmerIds: values }))
+              }}
+            >
+              {swimmers
+                .filter((swimmer) => !form.groupId || swimmer.groupId === form.groupId)
+                .map((swimmer) => (
+                  <option key={swimmer.id} value={swimmer.id}>
+                    {swimmer.firstName} {swimmer.lastName}
+                  </option>
+                ))}
+            </select>
+          </details>
         </form>
       </div>
 
-      <div className="rounded-3xl border border-[var(--border)] bg-white p-5 shadow-sm md:p-8">
+      <div className="rounded-3xl border border-[var(--border)] bg-white p-4 shadow-sm md:p-5">
         <div className="grid gap-3 md:grid-cols-3">
           <select className="min-h-12 rounded-2xl border border-[var(--border)] px-4" value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)}>
             <option value="">All groups</option>
@@ -136,7 +139,7 @@ export function AdminPhotosPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {photos.map((photo) => (
           <div key={photo.id} className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
             <button type="button" className="block w-full" onClick={() => setActivePhotoUrl(photo.url)}>
@@ -144,21 +147,23 @@ export function AdminPhotosPage() {
                 src={photo.thumbnailUrl ?? photo.url}
                 alt={photo.caption ?? 'Swim class photo'}
                 loading="lazy"
-                className="h-24 w-full object-cover"
+                className="h-20 w-full object-cover"
               />
             </button>
-            <div className="p-4">
-            <p className="text-sm text-[var(--text-muted)]">Group: {photo.group.name}</p>
-            <a href={photo.url} target="_blank" rel="noreferrer" className="font-semibold text-[var(--primary-dark)]">Open photo</a>
-            <p className="text-sm text-[var(--text-muted)]">{photo.caption ?? 'No caption'}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="grid gap-1 p-2">
+            <p className="truncate text-xs text-[var(--text-muted)]">{photo.group.name}</p>
+            <p className="truncate text-xs text-[var(--text-muted)]">{photo.caption ?? 'No caption'}</p>
+            <div className="mt-1 flex flex-wrap gap-1">
               {photo.tags.map((tag) => (
-                <span key={`${photo.id}-${tag.swimmer.id}`} className="rounded-full bg-[var(--primary)]/10 px-2 py-1 text-xs text-[var(--primary-dark)]">
+                <span key={`${photo.id}-${tag.swimmer.id}`} className="rounded-full bg-[var(--primary)]/10 px-1.5 py-0.5 text-[10px] text-[var(--primary-dark)]">
                   {tag.swimmer.firstName} {tag.swimmer.lastName}
                 </span>
               ))}
             </div>
-            <button type="button" className="mt-3 min-h-12 rounded-2xl bg-[var(--error)] px-4 text-sm font-semibold text-white" onClick={() => void remove(photo.id)}>Delete</button>
+            <div className="mt-1 flex items-center justify-between">
+              <a href={photo.url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-[var(--primary-dark)]">Open</a>
+              <button type="button" className="rounded-xl bg-[var(--error)] px-2 py-1 text-xs font-semibold text-white" onClick={() => void remove(photo.id)}>Delete</button>
+            </div>
             </div>
           </div>
         ))}
