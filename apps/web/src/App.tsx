@@ -21,6 +21,7 @@ import { LoginPage } from './pages/LoginPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ParentDashboardPage } from './pages/ParentDashboardPage'
 import { ParentPaymentsPage } from './pages/ParentPaymentsPage'
+import { ParentPhotosPage } from './pages/ParentPhotosPage'
 import { ParentSchedulePage } from './pages/ParentSchedulePage'
 import { ParentSwimmersPage } from './pages/ParentSwimmersPage'
 import { PortalSimpleListPage } from './pages/PortalSimpleListPage'
@@ -58,7 +59,7 @@ function App() {
           <Route path="swimmers" element={<ParentSwimmersPage />} />
           <Route path="schedule" element={<ParentSchedulePage />} />
           <Route path="payments" element={<ParentPaymentsPage />} />
-          <Route path="photos" element={<PortalSimpleListPage title="Photos" endpoint="/api/parent/photos" />} />
+          <Route path="photos" element={<ParentPhotosPage />} />
           <Route path="consent" element={<PortalSimpleListPage title="Consent Forms" endpoint="/api/consent-forms" />} />
           <Route path="announcements" element={<PortalSimpleListPage title="Announcements" endpoint="/api/parent/announcements" />} />
         </Route>

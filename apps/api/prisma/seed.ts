@@ -141,7 +141,7 @@ async function main() {
 
   const aquatots = await prisma.programLevel.findUniqueOrThrow({ where: { name: "Aquatots" } });
 
-  await prisma.group.upsert({
+  const saturdayAquatots = await prisma.group.upsert({
     where: { name: "Saturday Aquatots 9:00am" },
     update: {
       programLevelId: aquatots.id,
@@ -168,7 +168,189 @@ async function main() {
     }
   });
 
-  console.log("Seed complete", { adminUserId: adminUser.id, instructorUserId: instructorUser.id });
+  const demoParentPasswordHash = await bcrypt.hash("swimming", 10);
+  const demoParentUser = await prisma.user.upsert({
+    where: { email: "testparent989888245@example.com" },
+    update: {
+      firstName: "Test",
+      lastName: "Parent",
+      role: Role.PARENT,
+      phone: "4411234567",
+      passwordHash: demoParentPasswordHash
+    },
+    create: {
+      email: "testparent989888245@example.com",
+      firstName: "Test",
+      lastName: "Parent",
+      role: Role.PARENT,
+      phone: "4411234567",
+      passwordHash: demoParentPasswordHash
+    }
+  });
+
+  const demoParent = await prisma.parent.upsert({
+    where: { userId: demoParentUser.id },
+    update: {
+      address: "Warwick Parish, Bermuda",
+      emergencyName: "Jane",
+      emergencyPhone: "4417654321"
+    },
+    create: {
+      userId: demoParentUser.id,
+      address: "Warwick Parish, Bermuda",
+      emergencyName: "Jane",
+      emergencyPhone: "4417654321"
+    }
+  });
+
+  const demoSwimmer = await prisma.swimmer.upsert({
+    where: {
+      id: "demo-parent-swimmer"
+    },
+    update: {
+      parentId: demoParent.id,
+      firstName: "Kid",
+      lastName: "Parent",
+      dateOfBirth: new Date("2018-04-30T00:00:00.000Z"),
+      medicalNotes: "None provided",
+      registrationStatus: "APPROVED",
+      groupId: saturdayAquatots.id
+    },
+    create: {
+      id: "demo-parent-swimmer",
+      parentId: demoParent.id,
+      firstName: "Kid",
+      lastName: "Parent",
+      dateOfBirth: new Date("2018-04-30T00:00:00.000Z"),
+      medicalNotes: "None provided",
+      registrationStatus: "APPROVED",
+      groupId: saturdayAquatots.id
+    }
+  });
+
+  const duplicateSwimmers = await prisma.swimmer.findMany({
+    where: {
+      parentId: demoParent.id,
+      firstName: "Kid",
+      lastName: "Parent",
+      NOT: { id: demoSwimmer.id }
+    },
+    select: { id: true }
+  });
+
+  if (duplicateSwimmers.length > 0) {
+    const duplicateIds = duplicateSwimmers.map((item) => item.id);
+    await prisma.photoTag.deleteMany({ where: { swimmerId: { in: duplicateIds } } });
+    await prisma.attendance.deleteMany({ where: { swimmerId: { in: duplicateIds } } });
+    await prisma.consentForm.deleteMany({ where: { swimmerId: { in: duplicateIds } } });
+    await prisma.swimmer.deleteMany({ where: { id: { in: duplicateIds } } });
+  }
+
+  await prisma.payment.upsert({
+    where: { id: "demo-payment-term-fee" },
+    update: {
+      parentId: demoParent.id,
+      termId: summer2026.id,
+      description: "Summer 2026 Term Fee",
+      amountDue: 600,
+      amountPaid: 300,
+      status: "PARTIAL",
+      dueDate: new Date("2026-07-10T00:00:00.000Z"),
+      notes: "Balance due before term midpoint"
+    },
+    create: {
+      id: "demo-payment-term-fee",
+      parentId: demoParent.id,
+      termId: summer2026.id,
+      description: "Summer 2026 Term Fee",
+      amountDue: 600,
+      amountPaid: 300,
+      status: "PARTIAL",
+      dueDate: new Date("2026-07-10T00:00:00.000Z"),
+      notes: "Balance due before term midpoint"
+    }
+  });
+
+  await prisma.payment.upsert({
+    where: { id: "demo-payment-kit" },
+    update: {
+      parentId: demoParent.id,
+      termId: summer2026.id,
+      description: "Swim Kit and Cap",
+      amountDue: 85,
+      amountPaid: 0,
+      status: "OUTSTANDING",
+      dueDate: new Date("2026-07-20T00:00:00.000Z")
+    },
+    create: {
+      id: "demo-payment-kit",
+      parentId: demoParent.id,
+      termId: summer2026.id,
+      description: "Swim Kit and Cap",
+      amountDue: 85,
+      amountPaid: 0,
+      status: "OUTSTANDING",
+      dueDate: new Date("2026-07-20T00:00:00.000Z")
+    }
+  });
+
+  const demoPhotos = [
+    {
+      id: "demo-photo-1",
+      url: "https://images.unsplash.com/photo-1438029071396-1e831a7fa6d8?auto=format&fit=crop&w=1200&q=80",
+      caption: "Kickboard lane drills"
+    },
+    {
+      id: "demo-photo-2",
+      url: "https://images.unsplash.com/photo-1472745942893-4b9f730c7668?auto=format&fit=crop&w=1200&q=80",
+      caption: "Coach feedback at wall"
+    },
+    {
+      id: "demo-photo-3",
+      url: "https://images.unsplash.com/photo-1522706604291-210a56c3b376?auto=format&fit=crop&w=1200&q=80",
+      caption: "Breathing pattern practice"
+    }
+  ];
+
+  for (const item of demoPhotos) {
+    const photo = await prisma.photo.upsert({
+      where: { id: item.id },
+      update: {
+        groupId: saturdayAquatots.id,
+        url: item.url,
+        caption: item.caption,
+        uploadedById: adminUser.id
+      },
+      create: {
+        id: item.id,
+        groupId: saturdayAquatots.id,
+        url: item.url,
+        caption: item.caption,
+        uploadedById: adminUser.id
+      }
+    });
+
+    await prisma.photoTag.upsert({
+      where: {
+        photoId_swimmerId: {
+          photoId: photo.id,
+          swimmerId: demoSwimmer.id
+        }
+      },
+      update: {},
+      create: {
+        photoId: photo.id,
+        swimmerId: demoSwimmer.id
+      }
+    });
+  }
+
+  console.log("Seed complete", {
+    adminUserId: adminUser.id,
+    instructorUserId: instructorUser.id,
+    demoParentUserId: demoParentUser.id,
+    demoSwimmerId: demoSwimmer.id
+  });
 }
 
 main()

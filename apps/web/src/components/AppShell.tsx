@@ -6,11 +6,24 @@ type AppShellProps = {
   mobileTabs?: boolean
 }
 
-const mobileTabLinks = [
-  { label: 'Home', to: '.' },
-  { label: 'Schedule', to: 'schedule' },
-  { label: 'Payments', to: 'payments' }
-]
+const mobileTabLinksByRole: Record<AppShellProps['role'], Array<{ label: string; to: string }>> = {
+  Admin: [
+    { label: 'Home', to: '.' },
+    { label: 'Docs', to: 'documents' },
+    { label: 'Photos', to: 'photos' },
+    { label: 'Payments', to: 'payments' }
+  ],
+  Parent: [
+    { label: 'Home', to: '.' },
+    { label: 'Schedule', to: 'schedule' },
+    { label: 'Payments', to: 'payments' },
+    { label: 'Photos', to: 'photos' }
+  ],
+  Instructor: [
+    { label: 'Home', to: '.' },
+    { label: 'Schedule', to: 'schedule' }
+  ]
+}
 
 const navLinksByRole: Record<AppShellProps['role'], Array<{ label: string; to: string }>> = {
   Admin: [
@@ -27,7 +40,8 @@ const navLinksByRole: Record<AppShellProps['role'], Array<{ label: string; to: s
     { label: 'Dashboard', to: '/portal' },
     { label: 'Swimmers', to: '/portal/swimmers' },
     { label: 'Schedule', to: '/portal/schedule' },
-    { label: 'Payments', to: '/portal/payments' }
+    { label: 'Payments', to: '/portal/payments' },
+    { label: 'Photos', to: '/portal/photos' }
   ],
   Instructor: [
     { label: 'Dashboard', to: '/instructor' },
@@ -38,6 +52,7 @@ const navLinksByRole: Record<AppShellProps['role'], Array<{ label: string; to: s
 export function AppShell({ role, mobileTabs = false }: AppShellProps) {
   const navigate = useNavigate()
   const navLinks = navLinksByRole[role]
+  const mobileTabLinks = mobileTabLinksByRole[role]
   const isAdmin = role === 'Admin'
 
   async function signOut() {
@@ -101,7 +116,7 @@ export function AppShell({ role, mobileTabs = false }: AppShellProps) {
 
       {mobileTabs ? (
         <nav className={`fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] md:hidden ${isAdmin ? 'bg-cyan-50/95' : 'bg-white'}`}>
-          <ul className="grid grid-cols-3">
+          <ul className="grid" style={{ gridTemplateColumns: `repeat(${mobileTabLinks.length}, minmax(0, 1fr))` }}>
             {mobileTabLinks.map((item) => (
               <li key={item.to}>
                 <Link

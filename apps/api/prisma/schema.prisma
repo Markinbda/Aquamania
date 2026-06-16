@@ -54,6 +54,7 @@ model Swimmer {
   group              Group?             @relation(fields: [groupId], references: [id])
   consentForms       ConsentForm[]
   attendance         Attendance[]
+  photoTags          PhotoTag[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 }
@@ -225,15 +226,28 @@ enum PaymentStatus {
 }
 
 model Photo {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   groupId      String
-  group        Group    @relation(fields: [groupId], references: [id])
+  group        Group      @relation(fields: [groupId], references: [id])
   url          String
   thumbnailUrl String?
   caption      String?
   takenDate    DateTime?
   uploadedById String
-  createdAt    DateTime @default(now())
+  tags         PhotoTag[]
+  createdAt    DateTime   @default(now())
+}
+
+model PhotoTag {
+  id        String   @id @default(cuid())
+  photoId    String
+  photo      Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  swimmerId  String
+  swimmer    Swimmer  @relation(fields: [swimmerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([photoId, swimmerId])
+  @@index([swimmerId])
 }
 
 model Announcement {
